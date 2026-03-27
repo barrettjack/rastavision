@@ -124,8 +124,7 @@ Mesh load_obj(const std::string& filename) {
             std::cout << "Mesh objects have no data member for object names. "
                          "So, the line |" << line << "| is ignored.\n";
         } else {
-            std::cout << "load_obj does not support processing of lines beginning "
-                         "with " << prefix << ". This line has been ignored\n";
+            std::cout << "Unsupported line with contents:\n\t" << line << "\nHas been ignored\n";
         }
     }
 
@@ -136,4 +135,6 @@ Mesh load_obj(const std::string& filename) {
     // structure. We will have an array of all such vertices, and a second array
     // that indexes into this array. Each 3 consecutive indices in the latter array
     // correspond to a face of the mesh.
+
+    return Mesh{};
 }
