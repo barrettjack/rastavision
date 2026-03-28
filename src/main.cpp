@@ -2,8 +2,10 @@
 #include "../include/model.hpp"
 
 int main() {
-   Mesh mesh = load_obj("models/utah_teapot.obj");
-   Model model = {mesh};
+   Model model{};
+   model.mesh.vertices = new Vertex[1000];
+   model.mesh.indices = new uint32_t[1000];
+   load_obj("models/utah_teapot.obj", model.mesh);
 
    // ...
 

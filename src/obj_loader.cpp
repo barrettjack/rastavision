@@ -45,6 +45,7 @@
 //
 
 #include "../include/obj_loader.hpp"
+#include <array>
 #include <cstdint>
 #include <fstream>
 #include <glm/ext/vector_float3.hpp>
@@ -55,18 +56,64 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <cassert>
+#include <unordered_map>
 
 typedef struct {
-    glm::uint32_t v1;
-    glm::uint32_t v2;
-    glm::uint32_t v3;
-    glm::uint32_t vn1;
-    glm::uint32_t vn2;
-    glm::uint32_t vn3;
-    glm::uint32_t vt1;
-    glm::uint32_t vt2;
-    glm::uint32_t vt3;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t vn1;
+    uint32_t vn2;
+    uint32_t vn3;
+    uint32_t vt1;
+    uint32_t vt2;
+    uint32_t vt3;
 } face_data_indices;
+
+typedef struct {
+    uint32_t vertex_idx;
+    uint32_t texture_idx;
+    uint32_t normal_idx;
+} index_triple;
+
+typedef struct {
+    std::string id;
+    index_triple indices;
+} id_and_indices;
+
+id_and_indices indices_to_id(uint32_t vertex_idx, uint32_t texture_idx, uint32_t normal_idx) {
+    return {std::to_string(vertex_idx) + "/" + std::to_string(texture_idx) + "/" + std::to_string(normal_idx),
+        {vertex_idx, texture_idx, normal_idx}};
+}
+
+Vertex indices_to_vertex(index_triple indices, const std::vector<glm::vec3>& vertices,
+                         const std::vector<glm::vec3>& normals,
+                         const std::vector<glm::vec2>& texture_coords) {
+    Vertex v;
+    glm::vec3 pos = vertices[indices.vertex_idx];
+    glm::vec3 normal = normals[indices.normal_idx];
+    glm::vec2 texture_coord = texture_coords[indices.texture_idx];
+
+    v.px = pos.x;
+    v.py = pos.y;
+    v.pz = pos.z;
+    v.nx = normal.x;
+    v.ny = normal.y;
+    v.nz = normal.z;
+    v.u = texture_coord.x;
+    v.v = texture_coord.y;
+    return v;
+}
+
+void insert_index_in_mesh(Mesh& mesh, uint32_t idx) {
+    mesh.indices[mesh.index_count++] = idx;
+}
+
+uint32_t insert_vertex_in_mesh(Mesh& mesh, const Vertex& v) {
+    mesh.vertices[mesh.vertex_count] = v;
+    insert_index_in_mesh(mesh, mesh.vertex_count);
+    return mesh.vertex_count++;
+}
 
 void process_face(std::vector<face_data_indices>& faces, std::istringstream& ss) {
     face_data_indices face;
@@ -98,7 +145,7 @@ void process_face(std::vector<face_data_indices>& faces, std::istringstream& ss)
     faces.push_back(face);
 }
 
-Mesh load_obj(const std::string& filename) {
+void load_obj(const std::string& filename, Mesh& mesh) {
     using glm::vec2, glm::vec3;
     std::vector<vec3> vertices;
     std::vector<vec3> normals;
@@ -149,72 +196,41 @@ Mesh load_obj(const std::string& filename) {
 
     // TODO(jack): this is silly. We should do something smarter re: determining
     // the number of vertices and indices we'll ultimately need.
-    Mesh mesh;
     uint32_t num_faces = faces.size();
-    mesh.vertices = new Vertex[num_faces * 3];
-    mesh.indices = new glm::uint32_t[num_faces * 3];
+    // mesh.vertices = new Vertex[num_faces * 3];
+    // mesh.indices = new glm::uint32_t[num_faces * 3];
+
+    std::unordered_map<std::string, uint32_t> vertex_string_repr_to_indices;
 
     // pseudocode:
-    // for each Vertex that would be implied by the indices in our face array
-    //     create vertices v1, v2, v3
-    //     create indices i, j, k
-    //     for each Vertex in mesh.vertices
-    //          if we find a Vertex equal to vi anywhere in the array then don't do anything to mesh.vertices
-    //          and the corresponding index goes at the back of mesh.indices
+    // for face in faces
+    //     get Vertex data for the three Vertices and represent as strings
+    //     i.e. data from line "f 1/1/1 2/2/2 3/3/3" becomes "1/1/1", "2/2/2", "3/3/3" for use as keys in map
     //
-    //          else the vertex vi is unique and new so: add it to the back of mesh.vertices and the corresponding index
-    //          goes at the back of mesh.indices
+    //     for each string:
+    //         if the string is not in the map, then
+    //              construct vertex from indices (a function for this would be good)
+    //              insert vertex into mesh.vertices and and add index to mesh.indices. additionally, insert indices into map
+    //         else it is in the map, so get index from map and add index to mesh.indices
     //
-    //          for the above two conditions, take care to increment vertex_count and index_count accordingly
-    //
-    // a postcondition: should have index_count/3 == number_faces
-    auto populate_vertex_data = [&vertices, &normals, &texture_coords]
-                                (Vertex& v, const uint32_t v_idx, const uint32_t vn_idx, const uint32_t vt_idx) {
-                                    glm::vec3 v_pos = vertices[v_idx];
-                                    v.px = v_pos.x;
-                                    v.py = v_pos.y;
-                                    v.pz = v_pos.z;
+    for (uint32_t i = 0; i < num_faces; ++i) {
+        face_data_indices fdi = faces[i];
+        id_and_indices vertex_1 = indices_to_id(fdi.v1, fdi.vt1, fdi.vn1);
+        id_and_indices vertex_2 = indices_to_id(fdi.v2, fdi.vt2, fdi.vn2);
+        id_and_indices vertex_3 = indices_to_id(fdi.v3, fdi.vt3, fdi.vn3);
+        std::array<id_and_indices, 3> vs = {vertex_1, vertex_2, vertex_3};
 
-                                    glm::vec3 v_normal = normals[vn_idx];
-                                    v.nx = v_normal.x;
-                                    v.ny = v_normal.y;
-                                    v.nz = v_normal.z;
-
-                                    glm::vec2 v_texture = texture_coords[vt_idx];
-                                    v.u = v_texture.x;
-                                    v.v = v_texture.y;
-                                };
-
-    auto add_to_mesh = [&mesh](const Vertex& vertex) {
-        for (uint32_t i = 0; i < mesh.vertex_count; ++i) {
-            if (mesh.vertices[i] == vertex) {
-                // since we FOUND a copy of vertex we're trying to insert in the mesh,
-                // we need only specify its index in the indices array.
-                mesh.indices[mesh.index_count++] = i;
-                return;
+        for (const auto& [id, indices]: vs) {
+            if (vertex_string_repr_to_indices.count(id) == 0) {
+                Vertex v = indices_to_vertex(indices, vertices, normals, texture_coords);
+                uint32_t idx = insert_vertex_in_mesh(mesh, v);
+                vertex_string_repr_to_indices[id] = idx;
+            } else {
+                uint32_t idx = vertex_string_repr_to_indices.at(id);
+                insert_index_in_mesh(mesh, idx);
             }
         }
-
-        // if we get here, then we did not find a vertex in the mesh identical
-        // to the vertex we are trying to add. this means that we need to add it
-        // to our mesh's vertex array and increment the sizes of the arrays accordingly
-        uint32_t& mesh_vertices_ct = mesh.vertex_count;
-        mesh.vertices[mesh_vertices_ct] = vertex;
-        mesh.indices[mesh.index_count++] = mesh_vertices_ct++;
-    };
-
-    for (uint32_t i = 0; i < num_faces; ++i) {
-        Vertex v1, v2, v3;
-        face_data_indices fdi = faces[i];
-        populate_vertex_data(v1, fdi.v1, fdi.vn1, fdi.vt1);
-        populate_vertex_data(v2, fdi.v2, fdi.vn2, fdi.vt2);
-        populate_vertex_data(v3, fdi.v3, fdi.vn3, fdi.vt3);
-        add_to_mesh(v1);
-        add_to_mesh(v2);
-        add_to_mesh(v3);
     }
 
     assert(((mesh.index_count / 3) == num_faces) && "Incorrect number of faces. Something is wrong.");
-
-    return mesh;
 }

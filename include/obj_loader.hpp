@@ -3,4 +3,4 @@
 #include "mesh.hpp"
 #include <string>
 
-Mesh load_obj(const std::string&);
+void load_obj(const std::string&, Mesh&);
