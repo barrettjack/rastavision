@@ -197,8 +197,8 @@ void load_obj(const std::string& filename, Mesh& mesh) {
     // TODO(jack): this is silly. We should do something smarter re: determining
     // the number of vertices and indices we'll ultimately need.
     uint32_t num_faces = faces.size();
-    // mesh.vertices = new Vertex[num_faces * 3];
-    // mesh.indices = new glm::uint32_t[num_faces * 3];
+    mesh.vertices = new Vertex[num_faces * 3];
+    mesh.indices = new uint32_t[num_faces * 3];
 
     std::unordered_map<std::string, uint32_t> vertex_string_repr_to_indices;
 
