@@ -1,9 +1,9 @@
 #pragma once
 
 #include "mesh.hpp"
+#include <glm/ext/matrix_float4x4.hpp>
 
 typedef struct {
     Mesh mesh;
-    // Mat4 transform will go here, too...
-    // ...
+    glm::mat4 transform;
 } Model;

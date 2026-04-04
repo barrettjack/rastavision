@@ -58,29 +58,6 @@
 #include <cassert>
 #include <unordered_map>
 
-typedef struct {
-    uint32_t v1;
-    uint32_t v2;
-    uint32_t v3;
-    uint32_t vn1;
-    uint32_t vn2;
-    uint32_t vn3;
-    uint32_t vt1;
-    uint32_t vt2;
-    uint32_t vt3;
-} face_data_indices;
-
-typedef struct {
-    uint32_t vertex_idx;
-    uint32_t texture_idx;
-    uint32_t normal_idx;
-} index_triple;
-
-typedef struct {
-    std::string id;
-    index_triple indices;
-} id_and_indices;
-
 id_and_indices indices_to_id(uint32_t vertex_idx, uint32_t texture_idx, uint32_t normal_idx) {
     return {std::to_string(vertex_idx) + "/" + std::to_string(texture_idx) + "/" + std::to_string(normal_idx),
         {vertex_idx, texture_idx, normal_idx}};
