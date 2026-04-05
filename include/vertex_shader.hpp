@@ -29,4 +29,7 @@ typedef struct {
     uint32_t index_count;
 } ScreenSpaceData;
 
+// Notes to caller:
+// 1. This function allocates model.mesh.vertex_count number of ScreenSpaceVertex objects.
+// 2. For the world coordinate system, a right-handed system with +z up is assumed.
 ScreenSpaceData apply_vertex_shader(const Model& model, const Camera& camera, const DisplayInfo& display_info);

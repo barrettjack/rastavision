@@ -96,10 +96,10 @@ static void transform_positions(const Model& model, const Camera& camera, Screen
 
 ScreenSpaceData apply_vertex_shader(const Model& model, const Camera& camera, const DisplayInfo& display_info) {
     ScreenSpaceData data = {
-        new ScreenSpaceVertex[model.mesh.vertex_count],
-        model.mesh.indices,
-        model.mesh.vertex_count,
-        model.mesh.index_count,
+        .vertices = new ScreenSpaceVertex[model.mesh.vertex_count],
+        .indices = model.mesh.indices,
+        .vertex_count = model.mesh.vertex_count,
+        .index_count = model.mesh.index_count
     };
 
     transform_normals(model, data);

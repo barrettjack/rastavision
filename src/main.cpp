@@ -33,8 +33,6 @@ int main() {
 
    DisplayInfo display_info = {1280, 720};
 
-   // Remark: for the world coordinate system, I am assuming a right-handed
-   // system with +z up.
    ScreenSpaceData vertex_shader_outputs = apply_vertex_shader(model, camera, display_info);
 
    // const Vertex* vertices = model.mesh.vertices;

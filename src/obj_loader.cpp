@@ -58,42 +58,66 @@
 #include <cassert>
 #include <unordered_map>
 
-id_and_indices indices_to_id(uint32_t vertex_idx, uint32_t texture_idx, uint32_t normal_idx) {
-    return {std::to_string(vertex_idx) + "/" + std::to_string(texture_idx) + "/" + std::to_string(normal_idx),
-        {vertex_idx, texture_idx, normal_idx}};
+typedef struct {
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t vn1;
+    uint32_t vn2;
+    uint32_t vn3;
+    uint32_t vt1;
+    uint32_t vt2;
+    uint32_t vt3;
+} face_data_indices;
+
+typedef struct {
+    uint32_t vertex_idx;
+    uint32_t texture_idx;
+    uint32_t normal_idx;
+} index_triple;
+
+typedef struct {
+    std::string id;
+    index_triple indices;
+} id_and_indices;
+
+static id_and_indices indices_to_id(uint32_t vertex_idx, uint32_t texture_idx, uint32_t normal_idx) {
+    return {
+        .id = std::to_string(vertex_idx) + "/" + std::to_string(texture_idx) + "/" + std::to_string(normal_idx),
+        .indices = {vertex_idx, texture_idx, normal_idx}
+    };
 }
 
-Vertex indices_to_vertex(index_triple indices, const std::vector<glm::vec3>& vertices,
+static Vertex indices_to_vertex(index_triple indices, const std::vector<glm::vec3>& vertices,
                          const std::vector<glm::vec3>& normals,
                          const std::vector<glm::vec2>& texture_coords) {
-    Vertex v;
     glm::vec3 pos = vertices[indices.vertex_idx];
     glm::vec3 normal = normals[indices.normal_idx];
     glm::vec2 texture_coord = texture_coords[indices.texture_idx];
 
-    v.px = pos.x;
-    v.py = pos.y;
-    v.pz = pos.z;
-    v.nx = normal.x;
-    v.ny = normal.y;
-    v.nz = normal.z;
-    v.u = texture_coord.x;
-    v.v = texture_coord.y;
-    return v;
+    return Vertex {
+        .px = pos.x,
+        .py = pos.y,
+        .pz = pos.z,
+        .nx = normal.x,
+        .ny = normal.y,
+        .nz = normal.z,
+        .u = texture_coord.x,
+        .v = texture_coord.y
+    };
 }
 
-void insert_index_in_mesh(Mesh& mesh, uint32_t idx) {
+static void insert_index_in_mesh(Mesh& mesh, uint32_t idx) {
     mesh.indices[mesh.index_count++] = idx;
 }
 
-uint32_t insert_vertex_in_mesh(Mesh& mesh, const Vertex& v) {
+static uint32_t insert_vertex_in_mesh(Mesh& mesh, const Vertex& v) {
     mesh.vertices[mesh.vertex_count] = v;
     insert_index_in_mesh(mesh, mesh.vertex_count);
     return mesh.vertex_count++;
 }
 
-void process_face(std::vector<face_data_indices>& faces, std::istringstream& ss) {
-    face_data_indices face;
+static void process_face(std::vector<face_data_indices>& faces, std::istringstream& ss) {
     std::string blob;
     char slash;
 
@@ -115,9 +139,17 @@ void process_face(std::vector<face_data_indices>& faces, std::istringstream& ss)
         --vns[i];
     }
 
-    face.v1 = vs[0]; face.v2 = vs[1]; face.v3 = vs[2];
-    face.vt1 = vts[0]; face.vt2 = vts[1]; face.vt3 = vts[2];
-    face.vn1 = vns[0]; face.vn2 = vns[1]; face.vn3 = vns[2];
+    face_data_indices face {
+        .v1 = vs[0],
+        .v2 = vs[1],
+        .v3 = vs[2],
+        .vn1 = vns[0],
+        .vn2 = vns[1],
+        .vn3 = vns[2],
+        .vt1 = vts[0],
+        .vt2 = vts[1],
+        .vt3 = vts[2]
+    };
 
     faces.push_back(face);
 }
