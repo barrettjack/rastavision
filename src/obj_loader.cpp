@@ -154,7 +154,7 @@ static void process_face(std::vector<face_data_indices>& faces, std::istringstre
     faces.push_back(face);
 }
 
-void load_obj(const std::string& filename, Mesh& mesh) {
+void load_obj(const std::string& filepath, Mesh& mesh) {
     using glm::vec2, glm::vec3;
     std::vector<vec3> vertices;
     std::vector<vec3> normals;
@@ -165,7 +165,7 @@ void load_obj(const std::string& filename, Mesh& mesh) {
     // The representation of the file's data in memory mirrors almost identically
     // the formatting of the .obj file. This is a preliminary step; we will further
     // process the data before outputting a Mesh object.
-    std::ifstream file(filename);
+    std::ifstream file(filepath);
     std::string line;
     while (std::getline(file, line)) {
         std::istringstream ss(line);

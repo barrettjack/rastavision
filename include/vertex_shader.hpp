@@ -20,6 +20,9 @@
 typedef struct {
     float px, py, pz;
     float nx, ny, nz;
+    float pwx, pwy, pwz; // world-space position data for a model's vertex is retained
+                         // for downstream processing in the rasterizer and fragment
+                         // shader
 } ScreenSpaceVertex;
 
 typedef struct {
@@ -32,4 +35,7 @@ typedef struct {
 // Notes to caller:
 // 1. This function allocates model.mesh.vertex_count number of ScreenSpaceVertex objects.
 // 2. For the world coordinate system, a right-handed system with +z up is assumed.
+//
+// Transforms all of model's vertices to screen space and transforms model's normal
+// vectors into world space.
 ScreenSpaceData apply_vertex_shader(const Model& model, const Camera& camera, const DisplayInfo& display_info);

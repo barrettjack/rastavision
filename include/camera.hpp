@@ -11,4 +11,7 @@ typedef struct {
     // the vector (0, 0, 1) in a right-handed coordinate system where +z is up.
 
     float l, r, n, f, t, b;
+    // These floats define the camera's orthographic viewing volume following
+    // the conventions laid out in Marschner and Shirley's Fundamentals of Com-
+    // puter Graphics
 } Camera;

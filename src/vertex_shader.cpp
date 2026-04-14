@@ -27,6 +27,7 @@ static void transform_normals(const Model& model, ScreenSpaceData& target) {
 static void transform_positions(const Model& model, const Camera& camera, ScreenSpaceData& target, const DisplayInfo& display_info) {
     // Note: modelling transformation (model-to-world) is just model.transform
 
+
     // Camera transformation (world-to-camera; a specific canonical-to-frame transformation)
     // first, establishing an orthonormal, right-handed uvw basis about the camera's position and
     // gaze direction. then, applying a canonical-to-frame transformation to de-
@@ -70,6 +71,7 @@ static void transform_positions(const Model& model, const Camera& camera, Screen
 
 
     // Viewport transformation (canonical view volume to screen space)
+    // Note that no scaling is applied to the z-axis
     glm::mat4 cvv_to_screen_space(
         glm::vec4((display_info.nx / 2.0f), 0.0f, 0.0f, 0.0f),
         glm::vec4(0.0f, (display_info.ny / 2.0f), 0.0f, 0.0f),
@@ -86,15 +88,23 @@ static void transform_positions(const Model& model, const Camera& camera, Screen
         const Vertex& vertex_in_model_space = model.mesh.vertices[i];
         glm::vec4 pos_in_model_space (vertex_in_model_space.px, vertex_in_model_space.py, vertex_in_model_space.pz, 1.0f);
 
+        // Transforming from model space to screen space
         glm::vec4 pos_in_screen_space = model_to_screen_space * pos_in_model_space;
         ScreenSpaceVertex& current_vertex = target.vertices[i];
         current_vertex.px = pos_in_screen_space.x;
         current_vertex.py = pos_in_screen_space.y;
         current_vertex.pz = pos_in_screen_space.z;
+
+        // Transforming from model space to world space
+        glm::vec4 pos_in_world_space = model.transform * pos_in_model_space;
+        current_vertex.pwx = pos_in_world_space.x;
+        current_vertex.pwy = pos_in_world_space.y;
+        current_vertex.pwz = pos_in_world_space.z;
     }
 }
 
 ScreenSpaceData apply_vertex_shader(const Model& model, const Camera& camera, const DisplayInfo& display_info) {
+    // TODO(jack): refactor to place memory allocation in main, as in rasterizer()
     ScreenSpaceData data = {
         .vertices = new ScreenSpaceVertex[model.mesh.vertex_count],
         .indices = model.mesh.indices,
