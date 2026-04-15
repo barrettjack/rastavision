@@ -3,10 +3,8 @@
 #include <cstdint>
 
 struct Fragment {
-    float px, py; // pixel coordinates of the fragment
-    float pz; // fragment's interpolated depth at position px, py. -1 <= pz <= 1
-    float nx, ny, nz; // fragment's interpolated normal at position px, py.
-    float pwx, pwy, pwz; // interpolated world-space coordinates of the pixel's centre
+    float nx, ny, nz; // fragment's interpolated world space normal at alpha beta gamma
+    float pwx, pwy, pwz; // interpolated world-space coordinates of alpha beta gamma
 };
 
 struct FragmentData {

@@ -1,5 +1,7 @@
 #include "../include/rasterizer.hpp"
 #include <cstdint>
+#include <glm/fwd.hpp>
+
 
 void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
                 FragmentData& fragments,
@@ -42,9 +44,10 @@ void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
             return ((v2.py - v0.py) * x) + ((v0.px - v2.px) * y) + (v2.px * v0.py) - (v0.px * v2.py);
         };
 
-        // determine the pixel(s) that it covers
-        for (uint32_t y = 0; y < display_info.ny; ++y) {
-            for (uint32_t x = 0; x < display_info.nx; ++x) {
+        // TODO(jack): should iterate over triangle's axis-aligned bounding rectangle
+        // trivial optimization that could save millions of cycles.
+        for (float y = 0; y < static_cast<float>(display_info.ny); y += 1.0f) {
+            for (float x = 0; x < static_cast<float>(display_info.nx); x += 1.0f) {
                 float alpha = f_12(x, y) / f_12(v0.px, v0.py);
                 float beta = f_20(x, y) / f_20(v1.px, v1.py);
                 float gamma = f_01(x, y) / f_01(v2.px, v2.py);
@@ -52,10 +55,22 @@ void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
                 if (alpha > 0 and beta > 0 and gamma > 0) {
                     // interpolate pos on triangle.
                     float interpolated_z_coord = (alpha * v0.pz) + (beta * v1.pz) + (gamma * v2.pz);
-                    uint32_t xy_z_buffer_index = y * display_info.nx + x;
-                    if (interpolated_z_coord > z_buffer.z_buffer[xy_z_buffer_index]) {
-                        z_buffer.z_buffer[xy_z_buffer_index] = interpolated_z_coord;
+                    uint32_t pixel_coordinates = y * display_info.nx + x;
+                    if (interpolated_z_coord > z_buffer.z_buffer[pixel_coordinates]) {
+                        z_buffer.z_buffer[pixel_coordinates] = interpolated_z_coord;
+
                         // interpolate attributes and write to fragment!
+                        // attributes we care about:
+                        // position in world space (pw), normals in world space (n)
+                        // attributes we don't (?) care about:
+                        // x, y positions in screen space, z position in CVV/clip space (p)
+                        Fragment& f = fragments.fragments[pixel_coordinates];
+                        f.nx  = alpha * v0.nx  + beta * v1.nx  + gamma * v2.nx;
+                        f.ny  = alpha * v0.ny  + beta * v1.ny  + gamma * v2.ny;
+                        f.nz  = alpha * v0.nz  + beta * v1.nz  + gamma * v2.nz;
+                        f.pwx = alpha * v0.pwx + beta * v1.pwx + gamma * v2.pwx;
+                        f.pwy = alpha * v0.pwy + beta * v1.pwy + gamma * v2.pwy;
+                        f.pwz = alpha * v0.pwz + beta * v1.pwz + gamma * v2.pwz;
                     }
                 }
             }
