@@ -14,4 +14,12 @@ struct FragmentData {
     uint32_t fragment_count;
 };
 
-void rasterizer(const ScreenSpaceData& vertex_shader_outputs, FragmentData& fragments);
+struct z_buffer {
+    float* z_buffer;
+    uint32_t buffer_length;
+};
+
+void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
+                FragmentData& fragments,
+                z_buffer z_buffer,
+                const DisplayInfo display_info);
