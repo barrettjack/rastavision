@@ -1,3 +1,4 @@
+#pragma once
 
 #include "vertex_shader.hpp"
 #include <cstdint>

@@ -3,6 +3,7 @@
 #include "../include/vertex_shader.hpp"
 #include "../include/camera.hpp"
 #include "../include/rasterizer.hpp"
+#include "../include/fragment_shader.hpp"
 #include <cstdint>
 #include <glm/fwd.hpp>
 
@@ -71,6 +72,20 @@ int main() {
     }
 
     rasterizer(vertex_shader_outputs, fragments, z_buffer, display_info);
+
+
+    // Finally, we send the fragments off to the fragment shader.
+    // It will determine the colours to display at each pixel.
+    // These colours are written to an RGBA (in this order) buffer of uint32_t.
+    // i.e. the most significant 8 bits store the red value, and the least sign-
+    // ificant 8 bits store the alpha value
+    uint32_t* RGBA_values = new uint32_t[fragment_count];
+    for (uint32_t i = 0; i < fragment_count; ++i) {
+        RGBA_values[i] = 0;
+    }
+
+    apply_fragment_shader(fragments, RGBA_values, display_info);
+
 
 
     return 0;
