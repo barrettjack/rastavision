@@ -48,6 +48,11 @@ void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
         // trivial optimization that could save millions of cycles.
         for (float y = 0; y < static_cast<float>(display_info.ny); y += 1.0f) {
             for (float x = 0; x < static_cast<float>(display_info.nx); x += 1.0f) {
+
+                // TODO(jack):
+                // using alpha beta gamma computed from screen space x and y and using to interpolate
+                // world-space stuff might be incorrect, esp. when perspective projection is used.
+                // have to revisit the math on this.
                 float alpha = f_12(x, y) / f_12(v0.px, v0.py);
                 float beta = f_20(x, y) / f_20(v1.px, v1.py);
                 float gamma = f_01(x, y) / f_01(v2.px, v2.py);

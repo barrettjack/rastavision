@@ -11,7 +11,7 @@ void apply_fragment_shader(const FragmentData& fragments,
             // (ambient + diffuse + specular = Phong reflection)
 
             // so, we're missing:
-            // camera gaze dir
+            // camera gaze dir, position
             // light info
             // material info
         }
