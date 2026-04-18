@@ -1,4 +1,4 @@
-#include "../include/fragment_shader.hpp"
+#include "fragment_shader.hpp"
 #include <cstdint>
 
 void apply_fragment_shader(const FragmentData& fragments,

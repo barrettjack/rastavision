@@ -1,11 +1,15 @@
-#include "../include/obj_loader.hpp"
-#include "../include/model.hpp"
-#include "../include/vertex_shader.hpp"
-#include "../include/camera.hpp"
-#include "../include/rasterizer.hpp"
-#include "../include/fragment_shader.hpp"
+#include "obj_loader.hpp"
+#include "model.hpp"
+#include "vertex_shader.hpp"
+#include "camera.hpp"
+#include "rasterizer.hpp"
+#include "fragment_shader.hpp"
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_pixels.h>
 #include <cstdint>
 #include <glm/fwd.hpp>
+#include <SDL3/SDL_surface.h>
+#include <iostream>
 
 int main() {
     // Loading model into memory
@@ -74,7 +78,7 @@ int main() {
     rasterizer(vertex_shader_outputs, fragments, z_buffer, display_info);
 
 
-    // Finally, we send the fragments off to the fragment shader.
+    // Next, we send the fragments off to the fragment shader.
     // It will determine the colours to display at each pixel.
     // These colours are written to an RGBA (in this order) buffer of uint32_t.
     // i.e. the most significant 8 bits store the red value, and the least sign-
@@ -87,6 +91,17 @@ int main() {
     apply_fragment_shader(fragments, RGBA_values, display_info);
 
 
+    // Finally, the buffer is written to a .PNG file, leaning on the functionality
+    // of glorious SDL3.
+    SDL_Surface* display_buffer = SDL_CreateSurfaceFrom(display_info.nx, display_info.ny, SDL_PIXELFORMAT_RGBA8888, RGBA_values, display_info.nx * 4);
+    if (!display_buffer) {
+        std::cout << SDL_GetError() << "\n";
+        SDL_ClearError();
+    }
+    if (!SDL_SavePNG(display_buffer, "../tests/out.png")) {
+        std::cout << SDL_GetError() << "\n";
+        SDL_ClearError();
+    }
 
     return 0;
 }

@@ -1,4 +1,4 @@
-#include "../include/rasterizer.hpp"
+#include "rasterizer.hpp"
 #include <cstdint>
 #include <glm/fwd.hpp>
 
