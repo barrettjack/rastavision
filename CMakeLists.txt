@@ -10,11 +10,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 add_executable(${PROJECT_NAME}
+    src/globals.cpp
     src/main.cpp
     src/obj_loader.cpp
     src/vertex_shader.cpp

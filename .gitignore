@@ -1,4 +1,7 @@
 glm-master/
 build/
+cmake-build-debug/
 .idea/
 vendored/
+.cache/
+tests/

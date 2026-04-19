@@ -10,10 +10,12 @@
 #include <glm/fwd.hpp>
 #include <SDL3/SDL_surface.h>
 #include <iostream>
+#include "globals.hpp"
+
+using namespace std::string_view_literals;
 
 int main() {
     // Loading model into memory
-    // For now, placing model at the point (0, 1, 0) unscaled.
     // Assuming glm takes matrices in column-major order, per Claude...
     // In the future, this is a thing that might be programmatically updated
     // For instance, rotating a model about the z-axis would involve constructing
@@ -21,7 +23,7 @@ int main() {
     glm::vec4 col1 (1, 0, 0, 0);
     glm::vec4 col2 (0, 1, 0, 0);
     glm::vec4 col3 (0, 0, 1, 0);
-    glm::vec4 col4 (0, 1, 0, 1);
+    glm::vec4 col4 (0, 5, 0, 1);
     glm::mat4 transform = glm::mat4(
         col1, col2, col3, col4
     );
@@ -49,7 +51,7 @@ int main() {
         .l = -1.0f,
         .r = 1.0f,
         .n = -0.1f,
-        .f = -2.0f,
+        .f = -15.0f,
         .t = 1.0f,
         .b = -1.0f,
     };
@@ -88,7 +90,9 @@ int main() {
         RGBA_values[i] = 0;
     }
 
-    apply_fragment_shader(fragments, RGBA_values, display_info);
+    Light::init("./lighting/single-light.l"sv);
+    Material::init();
+    apply_fragment_shader(fragments, RGBA_values, display_info, camera);
 
 
     // Finally, the buffer is written to a .PNG file, leaning on the functionality
@@ -98,7 +102,7 @@ int main() {
         std::cout << SDL_GetError() << "\n";
         SDL_ClearError();
     }
-    if (!SDL_SavePNG(display_buffer, "../tests/out.png")) {
+    if (!SDL_SavePNG(display_buffer, "tests/out.png")) {
         std::cout << SDL_GetError() << "\n";
         SDL_ClearError();
     }

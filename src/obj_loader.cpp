@@ -57,6 +57,7 @@
 #include <iostream>
 #include <cassert>
 #include <unordered_map>
+#include <filesystem>
 
 typedef struct {
     uint32_t v1;
@@ -166,6 +167,13 @@ void load_obj(const std::string& filepath, Mesh& mesh) {
     // the formatting of the .obj file. This is a preliminary step; we will further
     // process the data before outputting a Mesh object.
     std::ifstream file(filepath);
+    if (!file) {
+        std::cerr << "Failed to open file at path: " << filepath << "\n";
+        std::cerr << "Current working directory is: " << std::filesystem::current_path() << "\n";
+        std::cerr << "Exiting\n";
+        exit(1);
+    }
+
     std::string line;
     while (std::getline(file, line)) {
         std::istringstream ss(line);
