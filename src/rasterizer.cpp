@@ -7,29 +7,19 @@
 void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
                 FragmentData& fragments,
                 z_buffer z_buffer,
-                const DisplayInfo display_info) {
-    // Pseudocode:
-    //
-    // For each primitive, determine the pixels it covers
-    //
-    // For each pixel that it covers,
-    // if the interpolated depth pz at px, py (the pixel's centre) is closer,
-    // overwrite the Fragment at the corresponding index of the Fragment*.
-    //
-    // Questions:
-    // how do we determine the pixels covered by a primitive?
-    // NOTE: see how much, as an optimization, computing a primitive's bounding box
-    // and only considering pixels within the bounding box improves performance.
-    //
-    // how should we map between a pixel's position and its index in the Fragment*?
-    // NOTE: start with the naive thing, then see how much a "Morton code/Z-order curve"
-    // or some other suitable pattern improves things
+                const DisplayInfo display_info,
+                const uint32_t* index_buffer,
+                const uint32_t index_buffer_len) {
+    // TODO(jack):
+    // see how much a "Morton code/Z-order curve" or some other suitable access
+    // pattern improves performance. granted. this optimization would have implic-
+    // ations for how we read the buffer too...
 
     // for each primitive...
-    for (uint32_t i = 0; i < vertex_shader_outputs.index_count; i += 3) {
-        uint32_t i0 = vertex_shader_outputs.indices[i];
-        uint32_t i1 = vertex_shader_outputs.indices[i + 1];
-        uint32_t i2 = vertex_shader_outputs.indices[i + 2];
+    for (uint32_t i = 0; i < index_buffer_len; i += 3) {
+        uint32_t i0 = index_buffer[i];
+        uint32_t i1 = index_buffer[i + 1];
+        uint32_t i2 = index_buffer[i + 2];
 
         const ScreenSpaceVertex& v0 = vertex_shader_outputs.vertices[i0];
         const ScreenSpaceVertex& v1 = vertex_shader_outputs.vertices[i1];
@@ -45,15 +35,16 @@ void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
             return ((v2.py - v0.py) * x) + ((v0.px - v2.px) * y) + (v2.px * v0.py) - (v0.px * v2.py);
         };
 
+        // Computing upper and lower bounds on the pixels that enclose the primitive defined by v0..2.
         float x_lb = glm::min(glm::floor(v0.px), glm::min(glm::floor(v1.px), glm::floor(v2.px)));
         float x_ub = glm::max(glm::ceil(v0.px),  glm::max(glm::ceil(v1.px),  glm::ceil(v2.px)));
         float y_lb = glm::min(glm::floor(v0.py), glm::min(glm::floor(v1.py), glm::floor(v2.py)));
         float y_ub = glm::max(glm::ceil(v0.py),  glm::max(glm::ceil(v1.py),  glm::ceil(v2.py)));
-
         x_lb = glm::max(x_lb, 0.0f);
         x_ub = glm::min(x_ub, static_cast<float>(display_info.nx - 1));
         y_lb = glm::max(y_lb, 0.0f);
         y_ub = glm::min(y_ub, static_cast<float>(display_info.ny - 1));
+
         for (float y = y_lb; y < y_ub; y += 1.0f) {
             for (float x = x_lb; x < x_ub; x += 1.0f) {
 
@@ -71,12 +62,6 @@ void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
                     uint32_t pixel_coordinates = y * display_info.nx + x;
                     if (interpolated_z_coord > z_buffer.z_buffer[pixel_coordinates]) {
                         z_buffer.z_buffer[pixel_coordinates] = interpolated_z_coord;
-
-                        // interpolate attributes and write to fragment!
-                        // attributes we care about:
-                        // position in world space (pw), normals in world space (n)
-                        // attributes we don't (?) care about:
-                        // x, y positions in screen space, z position in CVV/clip space (p)
                         Fragment& f = fragments.fragments[pixel_coordinates];
                         f.nx  = alpha * v0.nx  + beta * v1.nx  + gamma * v2.nx;
                         f.ny  = alpha * v0.ny  + beta * v1.ny  + gamma * v2.ny;

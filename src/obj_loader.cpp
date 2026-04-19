@@ -1,5 +1,5 @@
 // some notes re: .obj file parsing
-// this .obj file loader will support, initially, a minimal subset of features
+// this .obj file loader supports a minimal subset of features
 // supported by the file format. Specifically, it will parse lines of the form:
 //
 // o [object name]
@@ -16,35 +16,8 @@
 // vt: only u and v coordinates are provided (i.e. no w coordinate)
 //
 // f: face elements are triangles only
-//
-// QUESTIONS:
-//
-// 1. why are there more vt lines than v, vn?
-// 2. and why are there more f lines than v, vt, vn?
-// 3. how do faces work?
-// 4. how should I represent and store this data in my program?
-// 5. what data is needed for the rendering pipeline and what are the expectations
-//    or norms regarding how it will be stored/represented?
-//
-// ANSWERS:
-//
-// 1. TBD
-// 2. each vertex in a mesh can belong to more than one face of a triangular mesh
-// 3. for our purposes, faces will be triangles only. a face line stores 3 indices
-//    indicating the vertex index, texture index, and normal index for the three
-//    vertices of a triangular face. preceding vertex, vertex normal, and texture
-//    coordinate lines specify 1-indexed lists of such items. faces index into these
-//    lists.
-// 4.
-//
-// array of structs of the form:
-// Vec3 for v
-// Vec3 for n
-//
-// problem: there are more vt lines than v, vn. Why? Store this data separately?
-//
 
-#include "../include/obj_loader.hpp"
+#include "obj_loader.hpp"
 #include <array>
 #include <cstdint>
 #include <fstream>
@@ -162,10 +135,10 @@ void load_obj(const std::string& filepath, Mesh& mesh) {
     std::vector<vec2> texture_coords;
     std::vector<face_data_indices> faces;
 
-    // Here, we process the lines contained in the specified file.
-    // The representation of the file's data in memory mirrors almost identically
-    // the formatting of the .obj file. This is a preliminary step; we will further
-    // process the data before outputting a Mesh object.
+    // We will process the lines contained in the specified file.
+    // The in-memory representation of the file's data will mirror almost identically
+    // the formatting of the .obj file to start. Further transformations will be applied
+    // to obtain a more compact, more computation-friendly in-memory representation.
     std::ifstream file(filepath);
     if (!file) {
         std::cerr << "Failed to open file at path: " << filepath << "\n";
@@ -175,6 +148,9 @@ void load_obj(const std::string& filepath, Mesh& mesh) {
     }
 
     std::string line;
+    // TODO(jack):
+    // - offer a more complete .obj loader feature set..?
+    // - proper error handling within prefix cases
     while (std::getline(file, line)) {
         std::istringstream ss(line);
         std::string prefix;
@@ -196,10 +172,10 @@ void load_obj(const std::string& filepath, Mesh& mesh) {
         } else if (prefix == "f") {
             process_face(faces, ss);
         } else if (prefix == "o") {
-            std::cout << "Mesh objects have no data member for object names. "
-                         "So, the line |" << line << "| is ignored.\n";
+            // for now, doing nothing
         } else {
-            std::cout << "Unsupported line with contents:\n\t" << line << "\nHas been ignored\n";
+            // line is either a comment or some unsupported line type
+            // either way, for now, we do nothing
         }
     }
 
@@ -211,25 +187,15 @@ void load_obj(const std::string& filepath, Mesh& mesh) {
     // that indexes into this array. Each 3 consecutive indices in the latter array
     // correspond to a face of the mesh.
 
-    // TODO(jack): this is silly. We should do something smarter re: determining
-    // the number of vertices and indices we'll ultimately need.
+    // TODO(jack): we could conceivably do something smarter than assume we need
+    // 3*num_faces space in memory to store vertices and indices. But, I'm not sure
+    // this matters all that much, and it is a safe upper bound to use.
     uint32_t num_faces = faces.size();
     mesh.vertices = new Vertex[num_faces * 3];
     mesh.indices = new uint32_t[num_faces * 3];
 
     std::unordered_map<std::string, uint32_t> vertex_string_repr_to_indices;
 
-    // pseudocode:
-    // for face in faces
-    //     get Vertex data for the three Vertices and represent as strings
-    //     i.e. data from line "f 1/1/1 2/2/2 3/3/3" becomes "1/1/1", "2/2/2", "3/3/3" for use as keys in map
-    //
-    //     for each string:
-    //         if the string is not in the map, then
-    //              construct vertex from indices (a function for this would be good)
-    //              insert vertex into mesh.vertices and and add index to mesh.indices. additionally, insert indices into map
-    //         else it is in the map, so get index from map and add index to mesh.indices
-    //
     for (uint32_t i = 0; i < num_faces; ++i) {
         face_data_indices fdi = faces[i];
         id_and_indices vertex_1 = indices_to_id(fdi.v1, fdi.vt1, fdi.vn1);

@@ -1,24 +1,17 @@
 #pragma once
 
-#include "vertex_shader.hpp"
+#include "types_and_utils.hpp"
 #include <cstdint>
 
-struct Fragment {
-    float nx, ny, nz; // fragment's interpolated world space normal at alpha beta gamma
-    float pwx, pwy, pwz; // interpolated world-space coordinates of alpha beta gamma
-};
-
-struct FragmentData {
-    Fragment* fragments;
-    uint32_t fragment_count;
-};
-
-struct z_buffer {
-    float* z_buffer;
-    uint32_t buffer_length;
-};
-
-void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
+// rasterizer will output its data to the FragmentData object passed by the callee
+// code.
+//
+// It is important that the callee allocate sufficient memory for the FragmentData
+// object's Fragment buffer, i.e. if we wish to write an image to a 720p buffer,
+// allocate space for 1280x720 Fragment objects.
+extern void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
                 FragmentData& fragments,
                 z_buffer z_buffer,
-                const DisplayInfo display_info);
+                const DisplayInfo display_info,
+                const uint32_t* index_buffer,
+                const uint32_t index_buffer_len);

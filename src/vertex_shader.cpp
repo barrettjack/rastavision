@@ -1,4 +1,4 @@
-#include "../include/vertex_shader.hpp"
+#include "vertex_shader.hpp"
 #include <cassert>
 #include <cstdint>
 #include <glm/fwd.hpp>
@@ -53,12 +53,12 @@ static void transform_positions(const Model& model, const Camera& camera, Screen
         glm::vec4(1.0f, 0.0f, 0.0f, 0.0f),
         glm::vec4(0.0f, 1.0f, 0.0f, 0.0f),
         glm::vec4(0.0f, 0.0f, 1.0f, 0.0f),
-        glm::vec4(-camera.l, -camera.b, -camera.n, 1.0f)
+        glm::vec4(-camera.view_volume.l, -camera.view_volume.b, -camera.view_volume.n, 1.0f)
     );
     glm::mat4 scale_axes(
-        glm::vec4((2.0f / (camera.r - camera.l)), 0.0f, 0.0f, 0.0f),
-        glm::vec4(0.0f, (2.0f / (camera.t - camera.b)), 0.0f, 0.0f),
-        glm::vec4(0.0f, 0.0f, (2.0f / (camera.n - camera.f)), 0.0f),
+        glm::vec4((2.0f / (camera.view_volume.r - camera.view_volume.l)), 0.0f, 0.0f, 0.0f),
+        glm::vec4(0.0f, (2.0f / (camera.view_volume.t - camera.view_volume.b)), 0.0f, 0.0f),
+        glm::vec4(0.0f, 0.0f, (2.0f / (camera.view_volume.n - camera.view_volume.f)), 0.0f),
         glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
     );
     glm::mat4 translate_volume_to_cvv_corner(
@@ -103,17 +103,8 @@ static void transform_positions(const Model& model, const Camera& camera, Screen
     }
 }
 
-ScreenSpaceData apply_vertex_shader(const Model& model, const Camera& camera, const DisplayInfo& display_info) {
-    // TODO(jack): refactor to place memory allocation in main, as in rasterizer()
-    ScreenSpaceData data = {
-        .vertices = new ScreenSpaceVertex[model.mesh.vertex_count],
-        .indices = model.mesh.indices,
-        .vertex_count = model.mesh.vertex_count,
-        .index_count = model.mesh.index_count
-    };
-
-    transform_normals(model, data);
-    transform_positions(model, camera, data, display_info);
-
-    return data;
+void apply_vertex_shader(const Model& model, const Camera& camera,
+                         ScreenSpaceData& ssd, DisplayInfo display_info) {
+    transform_normals(model, ssd);
+    transform_positions(model, camera, ssd, display_info);
 }

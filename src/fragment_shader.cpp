@@ -1,5 +1,4 @@
 #include "fragment_shader.hpp"
-#include "camera.hpp"
 #include "globals.hpp"
 #include "rasterizer.hpp"
 #include <cassert>

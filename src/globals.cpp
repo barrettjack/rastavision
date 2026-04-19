@@ -46,7 +46,7 @@ std::vector<float> Material::alpha {};
 
 // Placeholder for something more
 void Material::init() {
-    Material::K_s.push_back({1.0f, 1.0f, 1.0f});
+    Material::K_s.push_back({1.0f, 0.0f, 0.0f});
     Material::K_d.push_back({1.0f, 1.0f, 1.0f});
     Material::alpha.push_back(1.0f);
 }
