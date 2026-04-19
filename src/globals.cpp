@@ -1,5 +1,7 @@
 #include "globals.hpp"
 #include <fstream>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/geometric.hpp>
 #include <sstream>
 #include <iostream>
 #include <filesystem>
@@ -28,8 +30,9 @@ void Light::init(std::string_view filepath) {
         ss >> type >> x >> y >> z;
 
         if (type == 'd')
-            directions.emplace_back(x, y, z);
+            directions.push_back(glm::normalize(glm::vec3(x, y, z)));
         else if (type == 'i')
+            // TODO: don't normalize here, but instead, clamp components in [0, 1]
             intensities.emplace_back(x, y, z);
     }
 }

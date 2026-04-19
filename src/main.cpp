@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <glm/fwd.hpp>
 #include <SDL3/SDL_surface.h>
+#include <glm/geometric.hpp>
 #include <iostream>
 #include "globals.hpp"
 
@@ -33,7 +34,7 @@ int main() {
         .transform = transform
     };
 
-    load_obj("models/utah_teapot.obj", model.mesh);
+    load_obj("models/utah_teapot_mid_complex.obj", model.mesh);
 
 
     // Next, we setup a camera and define the planes bounding its view volume
@@ -44,16 +45,17 @@ int main() {
     // This camera, coupled with display info and the model's data are used by
     // the vertex shader.
     glm::vec3 position (0, 0, 0);
-    glm::vec3 gaze_direction (0, 1, 0);
+    glm::vec3 gaze_direction (0, 1, -0.25);
+    gaze_direction = glm::normalize(gaze_direction);
     Camera camera {
         .position = position,
         .gaze_direction = gaze_direction,
-        .l = -1.0f,
-        .r = 1.0f,
+        .l = -5.0f,
+        .r = 5.0f,
         .n = -0.1f,
         .f = -15.0f,
-        .t = 1.0f,
-        .b = -1.0f,
+        .t = 5.0f,
+        .b = -5.0f,
     };
 
     DisplayInfo display_info = {.nx = 1280, .ny = 720};
