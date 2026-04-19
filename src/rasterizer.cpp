@@ -1,5 +1,6 @@
 #include "rasterizer.hpp"
 #include <cstdint>
+#include <glm/common.hpp>
 #include <glm/fwd.hpp>
 
 
@@ -44,10 +45,17 @@ void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
             return ((v2.py - v0.py) * x) + ((v0.px - v2.px) * y) + (v2.px * v0.py) - (v0.px * v2.py);
         };
 
-        // TODO(jack): should iterate over triangle's axis-aligned bounding rectangle
-        // trivial optimization that could save millions of cycles.
-        for (float y = 0; y < static_cast<float>(display_info.ny); y += 1.0f) {
-            for (float x = 0; x < static_cast<float>(display_info.nx); x += 1.0f) {
+        float x_lb = glm::min(glm::floor(v0.px), glm::min(glm::floor(v1.px), glm::floor(v2.px)));
+        float x_ub = glm::max(glm::ceil(v0.px),  glm::max(glm::ceil(v1.px),  glm::ceil(v2.px)));
+        float y_lb = glm::min(glm::floor(v0.py), glm::min(glm::floor(v1.py), glm::floor(v2.py)));
+        float y_ub = glm::max(glm::ceil(v0.py),  glm::max(glm::ceil(v1.py),  glm::ceil(v2.py)));
+
+        x_lb = glm::max(x_lb, 0.0f);
+        x_ub = glm::min(x_ub, static_cast<float>(display_info.nx - 1));
+        y_lb = glm::max(y_lb, 0.0f);
+        y_ub = glm::min(y_ub, static_cast<float>(display_info.ny - 1));
+        for (float y = y_lb; y < y_ub; y += 1.0f) {
+            for (float x = x_lb; x < x_ub; x += 1.0f) {
 
                 // TODO(jack):
                 // using alpha beta gamma computed from screen space x and y and using to interpolate

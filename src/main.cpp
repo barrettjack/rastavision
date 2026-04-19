@@ -1,3 +1,8 @@
+#define TIMING
+#ifdef TIMING
+#include <chrono>
+#endif
+
 #include "obj_loader.hpp"
 #include "model.hpp"
 #include "vertex_shader.hpp"
@@ -16,6 +21,11 @@
 using namespace std::string_view_literals;
 
 int main() {
+
+    #ifdef TIMING
+    auto start = std::chrono::high_resolution_clock::now();
+    #endif
+
     // Loading model into memory
     // Assuming glm takes matrices in column-major order, per Claude...
     // In the future, this is a thing that might be programmatically updated
@@ -108,6 +118,12 @@ int main() {
         std::cout << SDL_GetError() << "\n";
         SDL_ClearError();
     }
+
+    #ifdef TIMING
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cout << duration.count() << "ms\n";
+    #endif
 
     return 0;
 }
