@@ -1,16 +1,21 @@
 #include "vertex_shader.hpp"
+#include "types_and_utils.hpp"
 #include <cassert>
 #include <cstdint>
+#include <glm/ext/matrix_float4x4.hpp>
 #include <glm/fwd.hpp>
 #include <glm/geometric.hpp>
 #include <glm/matrix.hpp>
 
-static void transform_normals(const Model& model, ScreenSpaceData& target) {
-    glm::mat3 normal_transforming_matrix = glm::mat3(glm::transpose(glm::inverse(model.transform)));
+static void transform_normals(const VertexBuffer vertex_buffer,
+                              const IndexBuffer index_buffer,
+                              ScreenSpaceData& target,
+                              const glm::mat4& transform) {
+    glm::mat3 normal_transforming_matrix = glm::mat3(glm::transpose(glm::inverse(transform)));
 
     for (uint32_t i = 0; i < target.vertex_count; ++i) {
 
-        const Vertex& vertex_in_model_space = model.mesh.vertices[i];
+        const Vertex& vertex_in_model_space = vertex_buffer.buf[i];
         glm::vec3 normal_pre_transformation (vertex_in_model_space.nx,
             vertex_in_model_space.ny,
             vertex_in_model_space.nz);
@@ -24,7 +29,12 @@ static void transform_normals(const Model& model, ScreenSpaceData& target) {
     }
 }
 
-static void transform_positions(const Model& model, const Camera& camera, ScreenSpaceData& target, const DisplayInfo& display_info) {
+static void transform_positions(const VertexBuffer vertex_buffer,
+                                const IndexBuffer index_buffer,
+                                const Camera& camera,
+                                ScreenSpaceData& target,
+                                const DisplayInfo& display_info,
+                                const glm::mat4& transform) {
     // Note: modelling transformation (model-to-world) is just model.transform
 
 
@@ -81,11 +91,11 @@ static void transform_positions(const Model& model, const Camera& camera, Screen
 
 
     // The full sequence of transformations
-    glm::mat4 model_to_screen_space = cvv_to_screen_space * camera_to_cvv * world_to_camera * model.transform;
+    glm::mat4 model_to_screen_space = cvv_to_screen_space * camera_to_cvv * world_to_camera * transform;
 
 
     for (uint32_t i = 0; i < target.vertex_count; ++i) {
-        const Vertex& vertex_in_model_space = model.mesh.vertices[i];
+        const Vertex& vertex_in_model_space = vertex_buffer.buf[i];
         glm::vec4 pos_in_model_space (vertex_in_model_space.px, vertex_in_model_space.py, vertex_in_model_space.pz, 1.0f);
 
         // Transforming from model space to screen space
@@ -96,15 +106,19 @@ static void transform_positions(const Model& model, const Camera& camera, Screen
         current_vertex.pz = pos_in_screen_space.z;
 
         // Transforming from model space to world space
-        glm::vec4 pos_in_world_space = model.transform * pos_in_model_space;
+        glm::vec4 pos_in_world_space = transform * pos_in_model_space;
         current_vertex.pwx = pos_in_world_space.x;
         current_vertex.pwy = pos_in_world_space.y;
         current_vertex.pwz = pos_in_world_space.z;
     }
 }
 
-void apply_vertex_shader(const Model& model, const Camera& camera,
-                         ScreenSpaceData& ssd, DisplayInfo display_info) {
-    transform_normals(model, ssd);
-    transform_positions(model, camera, ssd, display_info);
+void apply_vertex_shader(ScreenSpaceData& ssd,
+                        const VertexBuffer vertex_buffer,
+                        const IndexBuffer index_buffer,
+                        const Camera& camera,
+                        const glm::mat4& transform,
+                        const DisplayInfo display_info) {
+    transform_normals(vertex_buffer, index_buffer, ssd, transform);
+    transform_positions(vertex_buffer, index_buffer, camera, ssd, display_info, transform);
 }

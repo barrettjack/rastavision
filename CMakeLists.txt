@@ -17,7 +17,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 add_executable(${PROJECT_NAME}
-    src/globals.cpp
+    src/types_and_utils.cpp
     src/main.cpp
     src/obj_loader.cpp
     src/vertex_shader.cpp

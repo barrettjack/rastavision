@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <glm/ext/matrix_float4x4.hpp>
+#include <string_view>
 
 struct DisplayInfo {
     uint32_t nx, ny;
@@ -13,16 +14,14 @@ struct Vertex {
     float u, v;         // texture coord
 };
 
-struct Mesh {
-    Vertex* vertices;    // Vec3 pos, Vec3 normal, Vec2 uv — interleaved
-    uint32_t* indices;    // every 3 = one triangle
-    uint32_t vertex_count;
-    uint32_t index_count;
+struct VertexBuffer {
+    Vertex* buf;
+    uint32_t len;
 };
 
-struct Model {
-    Mesh mesh;
-    glm::mat4 transform;
+struct IndexBuffer {
+    uint32_t* buf;
+    uint32_t len;
 };
 
 #define IS_UNIT_LENGTH(v) (glm::abs(glm::length((v)) - 1.0f) < 1e-5f)
@@ -72,3 +71,23 @@ struct z_buffer {
     float* z_buffer;
     uint32_t buffer_length;
 };
+
+// Light-related information for shading computations
+namespace Light {
+    extern std::vector<glm::vec3> directions;
+
+    // NOTE: the components of vectors in intensities correspond to dimensionless red,
+    // green, and blue intensities, and range in [0, 1].
+    extern std::vector<glm::vec3> intensities;
+    extern void init(std::string_view);
+}
+
+// Material related properties
+// NOTE: the components of vectors in K_s, K_d correspond to dimensionless red,
+// green, and blue intensities, and range in [0, 1].
+namespace Material {
+    extern std::vector<glm::vec3> K_s; // Specular highlights' colour
+    extern std::vector<glm::vec3> K_d; // Diffuse light emission colour
+    extern std::vector<float> alpha; // Shape parameter for specular highlights
+    extern void init(); // Placeholder for something more sensible
+}

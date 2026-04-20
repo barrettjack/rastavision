@@ -1,3 +1,5 @@
+#include "types_and_utils.hpp"
+#include <glm/ext/vector_float3.hpp>
 #define TIMING
 
 #ifdef TIMING
@@ -15,43 +17,21 @@
 #include <SDL3/SDL_surface.h>
 #include <glm/geometric.hpp>
 #include <iostream>
-#include "globals.hpp"
 
 using namespace std::string_view_literals;
 
 int main() {
     // Loading model into memory.
-    // In the future, this is a thing that might be programmatically updated.
-    // For instance, rotating a model about the z-axis would involve constructing
-    // a new model transform matrix each frame or physics update.
-    glm::vec4 col1 (1, 0, 0, 0);
-    glm::vec4 col2 (0, 1, 0, 0);
-    glm::vec4 col3 (0, 0, 1, 0);
-    glm::vec4 col4 (0, 5, 0, 1);
-    glm::mat4 transform = glm::mat4(
-        col1, col2, col3, col4
-    );
-
-    Model model {
-        .mesh = {},
-        .transform = transform
-    };
-
-    load_obj("models/utah_teapot_mid_complex.obj", model.mesh);
+    VertexBuffer vertex_buffer {.buf = nullptr, .len = 0};
+    IndexBuffer index_buffer {.buf = nullptr, .len = 0};
+    load_obj("models/utah_teapot_mid_complex.obj", vertex_buffer, index_buffer);
 
 
     // Next, we setup a camera and define the planes bounding its view volume
-    // Like the model's transform, this too can be programatically updated on a
-    // per-frame basis in the future, once some form of input-handling has been
-    // implemented. Specifically, one might have the camera's position and gaze
-    // direction change programatically in response to inputs.
-    //
-    // This camera, coupled with display info and the model's data are used by
-    // the vertex shader.
-    glm::vec3 position (0, 0, 0);
-    glm::vec3 gaze_direction (0, 1, -0.25);
-    gaze_direction = glm::normalize(gaze_direction);
-
+    // This can be programatically updated on a per-frame basis in the future,
+    // once some form of input-handling has been implemented. Specifically, one
+    // might have the camera's position and gaze direction change programatically
+    // in response to inputs.
     ViewVolume view_volume {
         .l = -5.0f,
         .r = 5.0f,
@@ -62,8 +42,8 @@ int main() {
     };
 
     Camera camera {
-        .position = position,
-        .gaze_direction = gaze_direction,
+        .position = glm::vec3(0, 0, 0),
+        .gaze_direction = glm::normalize(glm::vec3(0, 1, -0.25)),
         .view_volume = view_volume
     };
 
@@ -73,14 +53,24 @@ int main() {
     DisplayInfo display_info = {.nx = 1280, .ny = 720};
 
     ScreenSpaceData screen_space_data = {
-        .vertices = new ScreenSpaceVertex[model.mesh.vertex_count],
-        .vertex_count = model.mesh.vertex_count,
+        .vertices = new ScreenSpaceVertex[vertex_buffer.len],
+        .vertex_count = vertex_buffer.len,
     };
+
+    // In the future, this is a thing that might be programmatically updated,
+    // like the camera's gaze direction and position.
+    glm::vec4 col1 (1, 0, 0, 0);
+    glm::vec4 col2 (0, 1, 0, 0);
+    glm::vec4 col3 (0, 0, 1, 0);
+    glm::vec4 col4 (0, 5, 0, 1);
+    glm::mat4 transform = glm::mat4(
+        col1, col2, col3, col4
+    );
 
     #ifdef TIMING
     auto start = std::chrono::high_resolution_clock::now();
     #endif
-    apply_vertex_shader(model, camera, screen_space_data, display_info);
+    apply_vertex_shader(screen_space_data, vertex_buffer, index_buffer, camera, transform, display_info);
 
 
     // Next, data is sent off to the rasterizer for fragment coverage determination
@@ -100,7 +90,7 @@ int main() {
         z_buffer.z_buffer[i] = camera.view_volume.f;
     }
 
-    rasterizer(screen_space_data, fragments, z_buffer, display_info, model.mesh.indices, model.mesh.index_count);
+    rasterizer(fragments, z_buffer, screen_space_data, display_info, index_buffer);
 
 
     // Next, we send the fragments off to the fragment shader.
@@ -113,7 +103,10 @@ int main() {
         RGBA_values[i] = 0;
     }
 
-    // TODO(jack): THIS is the next set of targets for refactoring!!!
+    // TODO(jack): Reorganize/redo approach to lighting and materials..?
+    // How should a material be "bound" to a model?
+    // How should a texture for a given model be bound to that model?
+    // i.e. where or how is this data "grouped?"
     Light::init("./lighting/single-light.l"sv);
     Material::init();
     apply_fragment_shader(fragments, RGBA_values, display_info, camera);

@@ -1,6 +1,4 @@
-#include "fragment_shader.hpp"
-#include "globals.hpp"
-#include "rasterizer.hpp"
+#include "types_and_utils.hpp"
 #include <cassert>
 #include <cmath>
 #include <cstdint>

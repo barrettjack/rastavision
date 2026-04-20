@@ -1,25 +1,25 @@
 #include "rasterizer.hpp"
+#include "types_and_utils.hpp"
 #include <cstdint>
 #include <glm/common.hpp>
 #include <glm/fwd.hpp>
 
 
-void rasterizer(const ScreenSpaceData& vertex_shader_outputs,
-                FragmentData& fragments,
-                z_buffer z_buffer,
-                const DisplayInfo display_info,
-                const uint32_t* index_buffer,
-                const uint32_t index_buffer_len) {
+void rasterizer(FragmentData& fragments,
+                       z_buffer z_buffer,
+                       const ScreenSpaceData& vertex_shader_outputs,
+                       const DisplayInfo display_info,
+                       const IndexBuffer index_buffer) {
     // TODO(jack):
     // see how much a "Morton code/Z-order curve" or some other suitable access
     // pattern improves performance. granted. this optimization would have implic-
     // ations for how we read the buffer too...
 
     // for each primitive...
-    for (uint32_t i = 0; i < index_buffer_len; i += 3) {
-        uint32_t i0 = index_buffer[i];
-        uint32_t i1 = index_buffer[i + 1];
-        uint32_t i2 = index_buffer[i + 2];
+    for (uint32_t i = 0; i < index_buffer.len; i += 3) {
+        uint32_t i0 = index_buffer.buf[i];
+        uint32_t i1 = index_buffer.buf[i + 1];
+        uint32_t i2 = index_buffer.buf[i + 2];
 
         const ScreenSpaceVertex& v0 = vertex_shader_outputs.vertices[i0];
         const ScreenSpaceVertex& v1 = vertex_shader_outputs.vertices[i1];

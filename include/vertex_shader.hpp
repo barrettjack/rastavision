@@ -11,5 +11,9 @@
 //
 // Transforms all of model's vertices to screen space and transforms model's normal
 // vectors into world space. Additionally, world-space position data is computed and stored.
-extern void apply_vertex_shader(const Model& model, const Camera& camera,
-                        ScreenSpaceData& ssd, DisplayInfo display_info);
+extern void apply_vertex_shader(ScreenSpaceData& ssd,
+                                const VertexBuffer vertex_buffer,
+                                const IndexBuffer index_buffer,
+                                const Camera& camera,
+                                const glm::mat4& transform,
+                                const DisplayInfo display_info);

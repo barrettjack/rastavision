@@ -18,6 +18,7 @@
 // f: face elements are triangles only
 
 #include "obj_loader.hpp"
+#include "types_and_utils.hpp"
 #include <array>
 #include <cstdint>
 #include <fstream>
@@ -81,14 +82,14 @@ static Vertex indices_to_vertex(index_triple indices, const std::vector<glm::vec
     };
 }
 
-static void insert_index_in_mesh(Mesh& mesh, uint32_t idx) {
-    mesh.indices[mesh.index_count++] = idx;
+static void insert_index_in_mesh(VertexBuffer& vertex_buffer, IndexBuffer& index_buffer, uint32_t idx) {
+    index_buffer.buf[index_buffer.len++] = idx;
 }
 
-static uint32_t insert_vertex_in_mesh(Mesh& mesh, const Vertex& v) {
-    mesh.vertices[mesh.vertex_count] = v;
-    insert_index_in_mesh(mesh, mesh.vertex_count);
-    return mesh.vertex_count++;
+static uint32_t insert_vertex_in_mesh(VertexBuffer& vertex_buffer, IndexBuffer& index_buffer, const Vertex& v) {
+    vertex_buffer.buf[vertex_buffer.len] = v;
+    insert_index_in_mesh(vertex_buffer, index_buffer, vertex_buffer.len);
+    return vertex_buffer.len++;
 }
 
 static void process_face(std::vector<face_data_indices>& faces, std::istringstream& ss) {
@@ -128,7 +129,7 @@ static void process_face(std::vector<face_data_indices>& faces, std::istringstre
     faces.push_back(face);
 }
 
-void load_obj(const std::string& filepath, Mesh& mesh) {
+void load_obj(const std::string& filepath, VertexBuffer& vertex_buffer, IndexBuffer& index_buffer) {
     using glm::vec2, glm::vec3;
     std::vector<vec3> vertices;
     std::vector<vec3> normals;
@@ -191,8 +192,8 @@ void load_obj(const std::string& filepath, Mesh& mesh) {
     // 3*num_faces space in memory to store vertices and indices. But, I'm not sure
     // this matters all that much, and it is a safe upper bound to use.
     uint32_t num_faces = faces.size();
-    mesh.vertices = new Vertex[num_faces * 3];
-    mesh.indices = new uint32_t[num_faces * 3];
+    vertex_buffer.buf = new Vertex[num_faces * 3];
+    index_buffer.buf = new uint32_t[num_faces * 3];
 
     std::unordered_map<std::string, uint32_t> vertex_string_repr_to_indices;
 
@@ -206,11 +207,11 @@ void load_obj(const std::string& filepath, Mesh& mesh) {
         for (const auto& [id, indices]: vs) {
             if (vertex_string_repr_to_indices.count(id) == 0) {
                 Vertex v = indices_to_vertex(indices, vertices, normals, texture_coords);
-                uint32_t idx = insert_vertex_in_mesh(mesh, v);
+                uint32_t idx = insert_vertex_in_mesh(vertex_buffer, index_buffer, v);
                 vertex_string_repr_to_indices[id] = idx;
             } else {
                 uint32_t idx = vertex_string_repr_to_indices.at(id);
-                insert_index_in_mesh(mesh, idx);
+                insert_index_in_mesh(vertex_buffer, index_buffer, idx);
             }
         }
     }
